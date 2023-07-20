@@ -71,6 +71,8 @@ Data Structures
 
 Algorithms
 
+---
+
 Overview:
 Intro
 - [ ] Welcome the player to 21
@@ -100,20 +102,17 @@ Game itself:
         - Create 4 hashes name: str_name, val: 10 + add to cards
   - [x] Add 4 hashes name: ace, val: 11 + add to cards
   - [x] Return a shuffled cards array and close the method
-
 - [x] Initialize player/dealer hands/totals to 0
-      
-
-- [ ] Deal the cards
-  - [ ] Add to each hand 2 method calls of `draw card`
-    - [ ] Draw Card Method (deck, hand, total):
-      - [ ] pop a card from the deck and add hash to hand
-      - [ ] Add to total: the last card in hand's value
+- [x] Deal the cards
+  - [x] Add to each hand 2 method calls of `draw card`
+    - [x] Draw Card Method (deck, hand, total):
+      - [x] pop a card from the deck and add hash to hand
+      - [x] Add to total: the last card in hand's value
 
 - [ ] Player Turn Loop
-  - [ ] Display current hands Method Call:
-    - [ ] !!!!!!!!!
-  - [ ] Ask if hit or stay
+  - [x] Display current hands Method Call:
+    - [x] !!!!!!!!!
+  - [x] Ask if hit or stay
   - [ ] If hit: (CONVERT TO A HIT METHOD CALL)
     - [ ] Draw a card method call
     - [ ] Bust? Method Call (hand, total):
@@ -140,115 +139,6 @@ Game itself:
 
   - [ ] Print who's the winner!
   - [ ] Update + print score according to winner
-  - [ ] Ask if play again? break if no
+  - [x] Ask if play again? break if no
 
 =end
-
-# CONSTANTS
-BUST_LIMIT = 21
-DEALER_LIMIT = 17
-
-# METHODS
-# Game Displays
-def prompt(text)
-  puts "=> #{text}"
-end # Default text prompt method
-
-def list_cards(party)
-  # Note that :hand is an array of hashes (individual cards)
-  cards = party[:hand].map { |card| card[:name] }
-  if cards.size == 2
-    cards.join(' and ')
-  else
-    last_card = cards.pop
-    cards.join(', ') + ", and #{last_card}"
-  end
-end # Returns a party's :hand as a proper english string of cards
-
-def show_hands(parties)
-  dealer_card = parties[0][:hand].first[:name]
-  puts "Dealer has: #{dealer_card} and unknown card"
-  puts "You have: " + list_cards(parties[1])
-end # Displays dealer and player's hands in english
-
-# Card drawing
-def draw_card(party, deck)
-  card = deck.pop
-  party[:hand] << card
-  party[:total] += card[:val]
-end # Moves a card from the deck into the party's hand + updates total
-
-# GAME START
-# [ ] Initial Welcome
-system 'clear'
-prompt('Welcome to 21!')
-
-# [x] Initialize player/dealer data structure
-parties = [] # An array of hashes, containing name/score/hand/total
-%w(Dealer Player).each do |party|
-  parties << { name: party, score: 0 }
-end
-
-# GAME LOOP (Start game itself, track score btwn rounds)
-loop do
-  # INITIALIZE SINGLE ROUND VARIABLES
-  # [x] Clear hands/totals for each round
-  parties.each do |party|
-    party[:total] = 0
-    party[:hand] = []
-  end
-
-  # [x] Initialize the deck
-  deck = [] # Arr of hashes with name:, val:
-  (2..10).each do |num|
-    4.times do
-      deck << { name: num.to_s, val: num }
-    end
-  end
-  %w(Jack Queen King).each do |face|
-    4.times do
-      deck << { name: face, val: 10 }
-    end
-  end
-  4.times do
-    deck << { name: 'Ace', val: 11 }
-  end
-  deck.shuffle!
-
-  # [x] Deal the cards
-  parties.each do |party|
-    2.times do
-      draw_card(party, deck)
-    end
-  end
-
-  # [ ] Misc local variables (will we keep this?)
-  winner = nil # A falsey value -> a truthy string later
-
-  # [ ] Player Turn (extract to method?)
-  loop do
-    # [ ] Display current hands (System clear anywhere?)
-    show_hands(parties)
-
-    # [x] Ask if hit or stay
-    prompt("Hit or stay?")
-    answer = gets.chomp.downcase
-    if answer.start_with?('h')
-      # [ ] Compute turn itself
-    elsif answer.start_with?('s')
-      break
-    end
-  end
-
-  # [ ] Dealer Turn
-  # [ ] Compute results
-  # [ ] Display/Update results/scores
-
-
-  # [ ] Update ask to play again to if/then regarding net score?
-  # [x] Ask to play again
-  prompt('Play again? (Y/N)')
-  break unless gets.chomp.downcase.start_with?('y')
-end
-# [x] CLOSE GAME
-puts "Thank you for playing!"
