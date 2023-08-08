@@ -154,6 +154,10 @@ def prompt(text)
   puts "=> #{text}"
 end # Default text prompt method
 
+def linebreak
+  puts "=============="
+end # Prints several = characters
+
 def list_cards(party)
   # Note that :hand is an array of hashes (individual cards)
   cards = party[:hand].map { |card| card[:name] }
@@ -166,9 +170,10 @@ def list_cards(party)
 end # Returns a party's :hand as a proper english string of cards
 
 def show_hands(parties)
+  system 'clear'
   dealer_card = parties[0][:hand].first[:name]
-  puts "Dealer has: #{dealer_card} and unknown card"
-  puts "You have: " + list_cards(parties[1])
+  prompt("Dealer has: #{dealer_card} and unknown card")
+  prompt("You have: " + list_cards(parties[1]))
 end # Displays dealer and player's hands in english
 
 # Card drawing
@@ -178,20 +183,41 @@ def draw_card(party, deck)
   party[:total] += card[:val]
 end # Moves a card from the deck into the party's hand + updates total
 
+def update_aces(party, idx)
+  party[:hand][idx][:val] = 1 # Updates a single ace from 11 -> 1
+  party[:total] -= 10 # Updates the total to reflect the ace value
+end
+
+def bust?(party)
+  if party[:total] > BUST_LIMIT # MAYBE a bust
+    idx = party[:hand].find_index { |card| card[:val] == 11 }
+    if idx # truthy if a value 11 ace was found
+      update_aces(party, idx)
+      bust?(party) # Recursive call to recheck for a bust
+    else # No value 11 ace was found (and still above bust limit)
+      true
+    end
+  else # Not a bust
+    false
+  end
+end
+
 # GAME START
 # [ ] Initial Welcome
 system 'clear'
-prompt('Welcome to 21!')
+prompt('Welcome to 21!') # literally gets screenwiped immediately
 
 # [x] Initialize player/dealer data structure
-parties = [] # An array of hashes, containing name/score/hand/total
-%w(Dealer Player).each do |party|
-  parties << { name: party, score: 0 }
-end
+dealer = { name: 'Dealer', score: 0}
+player = { name: 'Player', score: 0}
+parties = [dealer, player]
 
 # GAME LOOP (Start game itself, track score btwn rounds)
 loop do
   # INITIALIZE SINGLE ROUND VARIABLES
+  # [x] Initialize nil winner variable
+  winner = nil # A falsey value -> a truthy string later
+
   # [x] Clear hands/totals for each round
   parties.each do |party|
     party[:total] = 0
@@ -215,40 +241,83 @@ loop do
   end
   deck.shuffle!
 
-  # [x] Deal the cards
+  # [x] Deal the cards & check for instant "busts" from double ace
   parties.each do |party|
     2.times do
       draw_card(party, deck)
     end
+    bust?(party)
   end
 
-  # [ ] Misc local variables (will we keep this?)
-  winner = nil # A falsey value -> a truthy string later
-
-  # [ ] Player Turn (extract to method?)
+  # [x] PLAYER TURN
   loop do
-    # [ ] Display current hands (System clear anywhere?)
     show_hands(parties)
 
-    # [x] Ask if hit or stay
     prompt("Hit or stay?")
     answer = gets.chomp.downcase
+    
     if answer.start_with?('h')
-      # [ ] Compute turn itself
+      draw_card(player, deck)
+      if bust?(player)
+        winner = dealer
+        show_hands(parties)
+        prompt("You bust!")
+        break
+      end
     elsif answer.start_with?('s')
       break
     end
   end
 
-  # [ ] Dealer Turn
-  # [ ] Compute results
-  # [ ] Display/Update results/scores
+  # [x] DEALER TURN
+  if winner == nil
+    until dealer[:total] >= DEALER_LIMIT
+      draw_card(dealer, deck)
+      if bust?(dealer)
+        winner = player
+        prompt("Dealer bust!")
+      end
+    end
+  end
 
+  # [x] DISPLAY RESULTS
+  # [x] Show grand total results (all cards + totals)
+  dealer_cards = list_cards(dealer)
+  player_cards = list_cards(player)
 
-  # [ ] Update ask to play again to if/then regarding net score?
-  # [x] Ask to play again
-  prompt('Play again? (Y/N)')
-  break unless gets.chomp.downcase.start_with?('y')
+  linebreak
+  prompt("Dealer has #{dealer_cards}, for a total of: #{dealer[:total]}")
+  prompt("Player has #{player_cards}, for a total of: #{player[:total]}")
+  linebreak
+
+  if winner == nil # If no one bust, determine winner:
+    if player[:total] > dealer[:total]
+      winner = player
+    elsif player[:total] < dealer[:total]
+      winner = dealer
+    end
+  end
+
+  if winner
+    prompt("#{winner[:name]} won!")
+    winner[:score] += 1
+  else
+    prompt("It was a tie!")
+  end
+
+  # [x] show round totals
+  # [x] if one round total >= 5 then break
+  # [x] else: ask to play again
+  prompt("Player: #{player[:score]}, Dealer: #{dealer[:score]}")
+  match_winner = parties.find_index { |party| party[:score] >= 5 }
+
+  if match_winner
+    prompt("#{parties[match_winner][:name]} has won 5 matches!")
+    break
+  else
+    prompt('Play again? (Y/N)')
+    break unless gets.chomp.downcase.start_with?('y')
+  end
 end
 # [x] CLOSE GAME
 puts "Thank you for playing!"

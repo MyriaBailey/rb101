@@ -1,2 +1,4 @@
 
 rubocop.yml
+lesson_6/.rubocop.yml
+.gitignore
