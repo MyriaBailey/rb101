@@ -23,7 +23,7 @@ Rules
     - can hit as many times until bust or stay
   - stay = dealer turn
     - dealer MUST hit until the total is AT LEAST 17
-      - if bust, player wins 
+      - if bust, player wins
       - if stay, compute winner
 
 Bonus Features
@@ -46,7 +46,6 @@ You have: 2 and 8
 
 Dealer has: 5 and unknown card
 You have: Jack and 6
-
 
 Data Structures
 - Deck of cards (initialized at beginning of each game, shuffled perhaps)
@@ -102,7 +101,6 @@ Game itself:
   - [x] Return a shuffled cards array and close the method
 
 - [x] Initialize player/dealer hands/totals to 0
-      
 
 - [ ] Deal the cards
   - [ ] Add to each hand 2 method calls of `draw card`
@@ -208,8 +206,8 @@ system 'clear'
 prompt('Welcome to 21!') # literally gets screenwiped immediately
 
 # [x] Initialize player/dealer data structure
-dealer = { name: 'Dealer', score: 0}
-player = { name: 'Player', score: 0}
+dealer = { name: 'Dealer', score: 0 }
+player = { name: 'Player', score: 0 }
 parties = [dealer, player]
 
 # GAME LOOP (Start game itself, track score btwn rounds)
@@ -255,7 +253,7 @@ loop do
 
     prompt("Hit or stay?")
     answer = gets.chomp.downcase
-    
+
     if answer.start_with?('h')
       draw_card(player, deck)
       if bust?(player)
@@ -270,7 +268,7 @@ loop do
   end
 
   # [x] DEALER TURN
-  if winner == nil
+  if winner.nil?
     until dealer[:total] >= DEALER_LIMIT
       draw_card(dealer, deck)
       if bust?(dealer)
@@ -290,7 +288,7 @@ loop do
   prompt("Player has #{player_cards}, for a total of: #{player[:total]}")
   linebreak
 
-  if winner == nil # If no one bust, determine winner:
+  if winner.nil? # If no one bust, determine winner:
     if player[:total] > dealer[:total]
       winner = player
     elsif player[:total] < dealer[:total]

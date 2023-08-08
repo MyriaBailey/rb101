@@ -1,6 +1,8 @@
 =begin
 Twenty-One Assignment
 
+Note: These are cut/pasted notes from the beginning of my coding process, reflecting initial directions rather than a fully up-to-date commentary on the finished product.
+
 Input: Turn decision to "hit" or "stay" (and perhaps repeat game)
 Output: What cards are had by player/dealer, total card values,
   who wins, turn prompts, repeat game prompts
