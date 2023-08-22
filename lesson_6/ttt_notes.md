@@ -146,3 +146,62 @@ To check for a win (at the end of a turn):
     - break if no
   - otherwise, next loop
 - thank you for playing!
+
+---
+
+- Initialize default settings
+- game_intro
+  - `display_rules`
+  - `change_rules` if `yes?`
+
+  - participants = `generate_participant_list` 
+    - [an array of hashes]
+    - name: string_name, token: tokens.unshift(?), score = 0
+  - token_reminder = `generate_token_reminder` [a string]
+- loop do
+  - turn_order = `generate_turn_order` (participants, who's first)
+    - **[??????? what shape]**
+  - board = `generate_board` (board size)
+    - **[??? what shape]**
+  - current_player = turn_order[0]
+
+  - loop do
+    - print token_reminder
+    - `display_board` (board)
+    - print "it's current_player's turn"
+
+    - **FOR NEXT TIME: SORT OUT PICKING PLAYER PIECES**
+    
+    - piece = `pick_piece` (current_player, board)
+      - if current_player is a player
+        - `pick_player_piece` (current_player, board)
+          - `display_empty_squares`
+      - else
+        - `pick_computer_piece` (current_player, board)
+    - `place_piece` (current_player, piece)
+
+    - if `someone_won?` (board)
+      - print "current_player won!"
+      - current_player[:score] += 1
+      - break
+    - elsif `board_tied?` (board)
+      - print "It's a tie!"
+      - break
+    - end
+
+    - `alternate_current_player`
+  - end
+
+  - `display_scoreboard`
+  - grand_winner = `find_grand_winner`
+  - if grand_winner
+    - print congrats grand_winner
+    - prompt to reset scoreboard
+    - if `yes?`
+      - `reset_scoreboard`
+    - else break
+  - else
+    - play next round?
+    - break unless yes?
+  - end
+- thanks for playing!
