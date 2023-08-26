@@ -174,10 +174,13 @@ To check for a win (at the end of a turn):
     
     - piece = `pick_piece` (current_player, board)
       - if current_player is a player
-        - `pick_player_piece` (current_player, board)
-          - `display_empty_squares`
+        - `pick_player_piece` (board)
+          - `display_empty_squares` (board)
+            - uses `empty_squares` and possibly a separate `comma_and`?
+          - prompt for piece until empty_squares contains that piece
+          - return respective square
       - else
-        - `pick_computer_piece` (current_player, board)
+        - `pick_computer_piece` (current_player, board/all_lines?)
     - `place_piece` (current_player, piece)
 
     - if `someone_won?` (board)
@@ -205,3 +208,85 @@ To check for a win (at the end of a turn):
     - break unless yes?
   - end
 - thanks for playing!
+
+---
+Winning move > defend > sq 5 > random sq
+- if there is an opening for computer to win, take that
+- else, if there is an opening for someone else to win, take that
+- else, if the middle square is open, take that
+- else, pick a random square
+
+when searching for a qualifying match:
+- find_index among mapped array of lines
+- if index found, pick the *correct* empty square
+
+<!-- idx = nil
+if idx.nil? then idx = find_winning_line
+if idx.nil? then idx = find_blocking_line
+if idx.nil? then idx = find_middle_sq
+if idx.nil? then idx = find_empty_sq
+return pick_correct_empty_sq (for the first two?) -->
+
+---
+**current computer logic:**
+lines_as_strings = mapped all_lines
+
+line = nil (replaced with index of a line)
+line = find_winning_line (return index from mapped lines)
+if line.nil? then find_blocking_line (return index from mapped lines)
+
+if line then return pick_sq_from_line (give idx to lines, return sq)
+else
+  - square = find_middle_sq (board)
+  - if square.nil? square = find_random_sq (board)
+  - return square
+
+**NEXT TO DO: given the current structures, write computer logic**
+- smth like: find the idx of all_lines that is a match. then using that
+  - idx on all_lines, find the specific empty sq of the array
+
+---
+
+- `pick_computer_piece` (current_player, board/all_lines?)
+  - save `all_lines_as_strings` where map each line in the array to be a string of its tokens
+  - if `opening_to_win?` with current token
+
+
+
+
+
+
+  - find_winning_choice
+    - of each line in the array, grab the first line where
+      - `squares_as_strings` returns
+
+
+---
+
+### For diagonals
+
+- On a chess board...
+- Going up:
+  - from first row on:
+    - [1a, 2b, 3c, 4d, 5e, 6f, 7g, 8h]
+    - [1b, 2c, 3d, 4e, 5f, 6g, 7h]
+    - [1c, 2d, 3e, 4f, 5g, 6h]
+    - [1d, 2e, 3f, 4g, 5h]
+    - column always starts from 1
+    - row is current iteration upto end
+  - from first col on:
+    - row always starts from 1
+    - col is current iteration upto end
+- Going down
+  - [8a, 7b, 6c, 5d, 4e, 3f, 2g, 1h]
+  - [7a, 6b, 5c, 4d, 3e, 2f, 1g]
+  - [6a, 5b, 4c, 3d, 2e, 1f]
+  - [5a, 4b, 3c, 2d, 1e]
+  - [4a, 3b, 2c, 1d]
+  - column is always current iteration downto beginning
+  - row always starts from 1
+
+### For middle sq
+
+- if odd (7 / 2) = 3 (correct index for sq 4)
+- if even (8 / 2) = 4 (upper bounds for middle idx, also need idx -1)
