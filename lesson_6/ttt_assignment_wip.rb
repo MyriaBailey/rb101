@@ -89,13 +89,45 @@ def middle_squares(brd, brd_size)
   end
 end # Returns an array of middle square(s)
 
+def one_token_strings(token)
+  [
+    token + EMPTY_TOKEN + EMPTY_TOKEN
+    EMPTY_TOKEN + token + EMPTY_TOKEN
+    EMPTY_TOKEN + EMPTY_TOKEN + token
+  ]
+end
+
+def two_token_strings(token)
+  [
+    token + token + EMPTY_TOKEN,
+    token + EMPTY_TOKEN + token,
+    EMPTY_TOKEN + token + token
+  ]
+end
+
+def three_token_strings(token)
+  [token + token + token]
+end
 
 # Boolean checks
 
 # Location finding
+def find_matching_line(line_strings, token_strings)
+  line_strings.find_index do |line|
+    token_strings.include?(line)
+  end
+end
 
 # Turn-based methods
+def pick_computer_piece(brd, brd_size, token)
+  lines = all_lines(brd, brd_size)
+  line_strings = lines.map do |line|
+    line.map { |sq| sq[:token] }.join
+  end
 
+  line_idx = nil
+  line_idx = find_matching_line(line_strings, two_token_strings(token))
+end
 
 
 # GAME ITSELF
@@ -114,7 +146,8 @@ p yes?
 board = generate_board(board_size)
 #p all_rows_or_cols(board, board_size, :row)
 #p all_diags(board)
-p all_lines(board, board_size)
+#p all_lines(board, board_size)
+pick_computer_piece(board, board_size)
 
 
 # Change settings?
