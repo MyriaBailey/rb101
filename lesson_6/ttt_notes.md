@@ -245,6 +245,8 @@ else
 - smth like: find the idx of all_lines that is a match. then using that
   - idx on all_lines, find the specific empty sq of the array
 
+**NEXTER TO DO: board_info hash for :size, :rows, :cols, etc?**
+
 ---
 
 - `pick_computer_piece` (current_player, board/all_lines?)

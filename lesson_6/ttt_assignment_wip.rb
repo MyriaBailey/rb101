@@ -16,9 +16,31 @@ def prompt(msg)
   puts "=> #{msg}"
 end
 
+def text_divider
+  puts "================"
+end
+
 def display_rules
   puts "Rules here!"
 end # wip
+
+def display_board(brd, brd_info)
+  text_divider
+  row_divider = "---" + "+---" * (brd_info[:size])
+
+  column_header = "  "
+  1.upto(brd_info[:size]) do |col|
+    column_header << " | #{col}"
+  end
+  puts column_header
+
+  brd_info[:rows].each.with_index do |row, idx|
+    puts row_divider
+    row_text = " #{LETTERS[idx]}"
+    row.each { |sq| row_text << " | #{sq[:token]}" }
+    puts row_text
+  end
+end
 
 # Player input
 # settings_dialogue, yes_or_no, get_valid_input ?
@@ -67,6 +89,14 @@ def all_diagonals(brd)
   diags
 end # A simplified search for diagonals on a 3x3 grid
 
+def all_rows(brd, brd_size)
+  rows = []
+  brd_size.times do |row_idx|
+    rows << brd.select { |sq| sq[:row] == row_idx }
+  end
+  rows
+end # A temporary? method? for specifically displaying board
+
 def all_lines(brd, brd_size)
   lines = []
 
@@ -91,8 +121,8 @@ end # Returns an array of middle square(s)
 
 def one_token_strings(token)
   [
-    token + EMPTY_TOKEN + EMPTY_TOKEN
-    EMPTY_TOKEN + token + EMPTY_TOKEN
+    token + EMPTY_TOKEN + EMPTY_TOKEN,
+    EMPTY_TOKEN + token + EMPTY_TOKEN,
     EMPTY_TOKEN + EMPTY_TOKEN + token
   ]
 end
@@ -144,6 +174,14 @@ display_rules
 p yes?
 
 board = generate_board(board_size)
+board_info = {
+  size: board_size,
+  rows: all_rows(board, board_size)
+}
+
+display_board(board, board_info)
+p yes?
+
 #p all_rows_or_cols(board, board_size, :row)
 #p all_diags(board)
 #p all_lines(board, board_size)
