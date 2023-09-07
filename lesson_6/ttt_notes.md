@@ -160,9 +160,7 @@ To check for a win (at the end of a turn):
   - token_reminder = `generate_token_reminder` [a string]
 - loop do
   - turn_order = `generate_turn_order` (participants, who's first)
-    - **[??????? what shape]**
   - board = `generate_board` (board size)
-    - **[??? what shape]**
   - current_player = turn_order[0]
 
   - loop do
@@ -246,6 +244,7 @@ else
   - idx on all_lines, find the specific empty sq of the array
 
 **NEXTER TO DO: board_info hash for :size, :rows, :cols, etc?**
+- board is a HASH with :squares, as well
 
 ---
 
