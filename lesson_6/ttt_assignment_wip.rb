@@ -31,9 +31,9 @@ def display_rules
   prompt("Welcome to Tic-Tac-Toe!")
   text_divider
   prompt("This is a game where players take turns marking a grid.")
-  prompt("The first player to get 3 marks in a line wins the game!")
+  prompt("The first player to get 3 marks in a line wins the match!")
   prompt("Any column, row, or diagonal counts as a line here.")
-  prompt("Go for best of five rounds!")
+  prompt("First to 5 wins the game!")
   text_divider
 end
 
@@ -194,6 +194,7 @@ def display_board(brd, textbars)
     row.each { |sq| row_text << " | #{sq[:token]}" }
     puts row_text
   end
+  text_divider
 end
 
 def who_goes_first(players, order, num_ppl)
@@ -233,13 +234,15 @@ end
 def pick_player_piece(player, brd)
   choices = empty_squares(brd).map { |sq| sq[:name] }
 
-  prompt("#{player[:name]}, pick a square: #{joinor(choices)}")
+  prompt("#{player[:name]}'s turn.")
+  prompt("Pick a square: #{joinor(choices)}")
   choice = get_valid_input(choices)
 
   idx = brd[:squares].find_index { |sq| sq[:name] == choice }
   brd[:squares][idx]
 end
 
+# TODO: Computer logic
 def pick_computer_piece(player, brd)
   empty_squares(brd).sample
 end
@@ -275,16 +278,29 @@ def lines_to_strings(lines)
 end
 
 
-# TODO: actually check this
+# TODO: how to determine if someone won???
 def someone_won?(brd)
   lines_to_strings(brd[:lines]).any? do |line|
-    nil
+    tokens = line.uniq.select do |token|
+      token != EMPTY_TOKEN && line.count(token) >= 3
+    end
+
+    if tokens.empty?
+      false
+    else
+      tokens.any? { |token| line.join.include?(token * 3) }
+    end
   end
 end
 
 def board_tied?(brd)
   empty_squares(brd).empty?
 end
+
+def clean_scoreboard!(all_players)
+  all_players.each { |player| player[:score] = 0 }
+end
+
 
 # TODO: Whatever... this computer AI is.
 # def find_matching_line(line_strings, token_strings)
@@ -306,13 +322,11 @@ end
 
 
 
-
-# GAME ITSELF
 board = { size: 3 }
 num_computers = 1
 num_people = 1
 whos_first = 'P'
-best_of = 5
+best_of = 3
 
 display_rules
 # TODO: Change settings?
@@ -331,10 +345,11 @@ loop do
   clean_board!(board)
   current_player = who_goes_first(players, whos_first, num_people)
 
+  display_board(board, textbars)
   loop do
-    display_board(board, textbars)
     place_piece!(current_player, board)
-
+    display_board(board, textbars)
+    
     if someone_won?(board)
       prompt("#{current_player[:name]} won!")
       current_player[:score] += 1
@@ -346,10 +361,21 @@ loop do
 
     current_player = alternate_player(current_player, players)
   end
+  
+  text_divider
+  puts "Scoreboard"
+  players.each { |player| prompt("#{player[:name]}: #{player[:score]}") }
 
-  # TODO: scoreboard display and next game prompts
-  grand_winner = players.index { |player| }
+  text_divider
+  winner = players.select { |player| player[:score] >= best_of }.first
+  if winner
+    prompt("#{winner[:name]} won #{best_of} games!")
+    prompt("Do you want to start over and keep playing? (Y/N)")
+    yes? ? clean_scoreboard!(players) : break
+  else
+    prompt("Start next match? (Y/N)")
+    break unless yes?
+  end
 end
 
 prompt("Thanks for playing!")
-# Outro
