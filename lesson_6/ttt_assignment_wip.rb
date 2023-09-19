@@ -154,6 +154,74 @@ def all_diags(brd)
   diags
 end
 
+def all_diags_two(brd)
+  diags = all_down_diags(brd) + all_up_diags(brd)
+end
+
+def all_down_diags(brd)
+  diags = []
+  last_idx = brd[:size] - 1
+
+  0.upto(last_idx) do |start_idx|
+    diag = (0..(last_idx - start_idx)).to_a
+
+    diags << diag.map do |diag_idx|
+      brd[:squares].select do |sq|
+        sq[:col] == diag_idx && sq[:row] == start_idx + diag_idx
+      end
+    end
+
+    diags << diag.map do |diag_idx|
+      brd[:squares].select do |sq|
+        sq[:row] == diag_idx && sq[:col] == start_idx + diag_idx
+      end
+    end
+  end
+
+  diags
+end
+
+# TODO: other direction of diags... first works fine, not this one
+def all_up_diags(brd)
+  diags = []
+  last_idx = brd[:size] - 1
+
+  0.upto(last_idx) do |start_idx|
+    diag = (0..(last_idx - start_idx)).to_a
+
+    diags << diag.map do |diag_idx|
+      brd[:squares].select do |sq|
+        sq[:col] == last_idx - start_idx && sq[:row] == diag_idx
+      end
+    end
+
+    diags << diag.map do |diag_idx|
+      brd[:squares].select do |sq|
+        sq[:row] == last_idx - start_idx && sq[:col] == diag_idx
+      end
+    end
+  end
+
+
+  # last_idx.downto(0) do |end_idx|
+  #   diag = (0..(end_idx)).to_a.reverse
+
+  #   diags << diag.map.with_index do |diag_num, idx|
+  #     brd[:squares].select do |sq|
+  #       sq[:col] == diag_num && sq[:row] == idx
+  #     end
+  #   end
+
+  #   diags << diag.map.with_index do |diag_num, idx|
+  #     brd[:squares].select do |sq|
+  #       sq[:row] == diag_num && sq[:col] == diag_num + idx
+  #     end
+  #   end
+  # end
+
+  diags
+end
+
 def middle_squares(brd)
   midpoint = brd[:size] / 2
 
@@ -217,7 +285,6 @@ def alternate_player(player, all_players)
   end
 end
 
-# REVIEW: Should the token be placed inside the method call? how?
 def place_piece!(player, brd)
   square =
     if player[:name].start_with?('P')
@@ -225,8 +292,6 @@ def place_piece!(player, brd)
     else
       pick_computer_piece(player, brd)
     end
-
-  # brd[:squares][square_idx][:token] = player[:token]
   square[:token] = player[:token]
 end
 
@@ -242,16 +307,19 @@ def pick_player_piece(player, brd)
   brd[:squares][idx]
 end
 
-# TODO: Computer logic
 def pick_computer_piece(player, brd)
-  empty_squares(brd).sample
+  lines = brd[:lines]
+  strings = lines_to_strings(brd[:lines])
+  combos = combo_strings(player, brd)
+
+  sq = find_strategic_sq(lines, strings, combos[:win])
+  sq = find_strategic_sq(lines, strings, combos[:defend]) if sq.nil?
+  sq = find_strategic_sq(lines, strings, combos[:advance]) if sq.nil?
+  sq = find_mid_sq(brd) if sq.nil?
+  sq = empty_squares(brd).sample if sq.nil?
+  sq
 end
 
-
-
-
-
-# REVIEW: How and when are these used?
 def one_token_strings(token)
   [
     token + EMPTY_TOKEN + EMPTY_TOKEN,
@@ -268,28 +336,52 @@ def two_token_strings(token)
   ]
 end
 
-def three_token_strings(token)
-  [token + token + token]
-end
+def combo_strings(player, brd)
+  combos = {}
+  other_tokens = brd[:tokens].reject { |t| t == player[:token] }
 
+  combos[:win] = two_token_strings(player[:token])
+  combos[:defend] = other_tokens.map { |t| two_token_strings(t) }.flatten
+  combos[:advance] = one_token_strings(player[:token])
+
+  combos
+end
 
 def lines_to_strings(lines)
-  lines.map { |line| line.map { |sq| sq[:token] } }
+  lines.map { |line| line.map { |sq| sq[:token] }.join }
 end
 
+def which_empty_sq(line, idx)
+  line.values_at(idx..(idx + 2)).select do |sq|
+    sq[:token] == EMPTY_TOKEN
+  end.sample
+end
 
-# TODO: how to determine if someone won???
-def someone_won?(brd)
+def find_strategic_sq(lines, line_strings, substrings)
+  choices = []
+
+  lines.each_with_index do |line, i|
+    line_start_idx = substrings.map do |sub_str|
+      line_strings[i].index(sub_str)
+    end.compact.sample
+
+    if line_start_idx
+      choices << which_empty_sq(line, line_start_idx)
+      break
+    end
+  end
+  choices.sample
+end
+
+def find_mid_sq(brd)
+  empty_squares(brd).intersection(brd[:middle]).sample
+end
+
+def someone_won?(brd, player)
+  winning_combo = player[:token] * 3
+
   lines_to_strings(brd[:lines]).any? do |line|
-    tokens = line.uniq.select do |token|
-      token != EMPTY_TOKEN && line.count(token) >= 3
-    end
-
-    if tokens.empty?
-      false
-    else
-      tokens.any? { |token| line.join.include?(token * 3) }
-    end
+    line.include?(winning_combo)
   end
 end
 
@@ -300,27 +392,6 @@ end
 def clean_scoreboard!(all_players)
   all_players.each { |player| player[:score] = 0 }
 end
-
-
-# TODO: Whatever... this computer AI is.
-# def find_matching_line(line_strings, token_strings)
-#   line_strings.find_index do |line|
-#     token_strings.include?(line)
-#   end
-# end
-
-# def pick_computer_piece(brd, brd_size, token)
-#   lines = all_lines(brd, brd_size)
-#   line_strings = lines.map do |line|
-#     line.map { |sq| sq[:token] }.join
-#   end
-
-#   line_idx = nil
-#   line_idx = find_matching_line(line_strings, two_token_strings(token))
-# end
-
-
-
 
 board = { size: 3 }
 num_computers = 1
@@ -336,10 +407,20 @@ if yes?
   prompt("How many computers do you want to play against? (0-6)")
 end
 
+# OPTIMIZE: Move the build token reminder into the textbars
 players = build_player_list(num_people, num_computers)
 textbars = build_textbars(board[:size])
 textbars[:tokens] = build_token_reminder(players)
 compile_board!(board)
+
+# OPTIMIZE: Shove this in a method somewhere else
+board[:tokens] = []
+players.each { |player| board[:tokens] << player[:token] }
+
+# TODO: figure out diags
+display_board(board, textbars)
+all_diags_two(board).each { |thing| p thing }
+yes?
 
 loop do
   clean_board!(board)
@@ -350,7 +431,7 @@ loop do
     place_piece!(current_player, board)
     display_board(board, textbars)
     
-    if someone_won?(board)
+    if someone_won?(board, current_player)
       prompt("#{current_player[:name]} won!")
       current_player[:score] += 1
       break
