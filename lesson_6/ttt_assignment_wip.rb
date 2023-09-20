@@ -14,7 +14,7 @@ def joinor(list)
     list.join(" and ")
   else
     last = list.pop
-    list.join(", ") + ", and " + last
+    list.join(", ") + ", or " + last
   end
 end
 
@@ -67,12 +67,12 @@ def build_player_list(people, computers)
     tokens = %w[X O]
     names = %w[Player Computer]
   else
-    tokens = LETTERS.reverse
+    tokens = ['X', 'O', '#', '!', '&', '%', '*']
     people.times do |num|
-      names << "Player #{num + 1}"
+      names << "Player#{num + 1}"
     end
     computers.times do |num|
-      names << "Computer #{num + 1}"
+      names << "Computer#{num + 1}"
     end
   end
 
@@ -136,90 +136,38 @@ def all_cols(brd)
   cols
 end
 
-# OPTIMIZE: Does not account for larger grids
+def all_diag_coords(brd)
+  coord_sets = []
+
+  cols_forward = (0..(brd[:size] - 1)).to_a
+  cols_reversed = cols_forward.reverse
+  rows_forward = cols_forward.dup
+  rows_reversed = cols_forward.reverse
+
+  until cols_forward.empty?
+    coord_sets << [cols_forward, rows_forward].transpose
+    coord_sets << [cols_forward, rows_reversed].transpose
+
+    coord_sets << [cols_reversed, rows_forward].transpose
+    coord_sets << [cols_reversed, rows_reversed].transpose
+
+    cols_forward.shift
+    cols_reversed.shift
+    rows_forward.pop
+    rows_reversed.pop
+  end
+
+  coord_sets.reject! { |line| line.count < 3 }
+end
+
 def all_diags(brd)
-  diags = []
-
-  down_diags = ['1A', '2B', '3C']
-  up_diags = ['3A', '2B', '1C']
-
-  diags << brd[:squares].select do |sq|
-    down_diags.include?(sq[:name])
-  end
-
-  diags << brd[:squares].select do |sq|
-    up_diags.include?(sq[:name])
-  end
-
-  diags
-end
-
-def all_diags_two(brd)
-  diags = all_down_diags(brd) + all_up_diags(brd)
-end
-
-def all_down_diags(brd)
-  diags = []
-  last_idx = brd[:size] - 1
-
-  0.upto(last_idx) do |start_idx|
-    diag = (0..(last_idx - start_idx)).to_a
-
-    diags << diag.map do |diag_idx|
+  all_diag_coords(brd).map do |coord_set|
+    coord_set.map do |coord|
       brd[:squares].select do |sq|
-        sq[:col] == diag_idx && sq[:row] == start_idx + diag_idx
-      end
-    end
-
-    diags << diag.map do |diag_idx|
-      brd[:squares].select do |sq|
-        sq[:row] == diag_idx && sq[:col] == start_idx + diag_idx
-      end
+        sq[:col] == coord[0] && sq[:row] == coord[1]
+      end.first
     end
   end
-
-  diags
-end
-
-# TODO: other direction of diags... first works fine, not this one
-def all_up_diags(brd)
-  diags = []
-  last_idx = brd[:size] - 1
-
-  0.upto(last_idx) do |start_idx|
-    diag = (0..(last_idx - start_idx)).to_a
-
-    diags << diag.map do |diag_idx|
-      brd[:squares].select do |sq|
-        sq[:col] == last_idx - start_idx && sq[:row] == diag_idx
-      end
-    end
-
-    diags << diag.map do |diag_idx|
-      brd[:squares].select do |sq|
-        sq[:row] == last_idx - start_idx && sq[:col] == diag_idx
-      end
-    end
-  end
-
-
-  # last_idx.downto(0) do |end_idx|
-  #   diag = (0..(end_idx)).to_a.reverse
-
-  #   diags << diag.map.with_index do |diag_num, idx|
-  #     brd[:squares].select do |sq|
-  #       sq[:col] == diag_num && sq[:row] == idx
-  #     end
-  #   end
-
-  #   diags << diag.map.with_index do |diag_num, idx|
-  #     brd[:squares].select do |sq|
-  #       sq[:row] == diag_num && sq[:col] == diag_num + idx
-  #     end
-  #   end
-  # end
-
-  diags
 end
 
 def middle_squares(brd)
@@ -295,7 +243,6 @@ def place_piece!(player, brd)
   square[:token] = player[:token]
 end
 
-# OPTIMIZE: change dialogue text to flow better
 def pick_player_piece(player, brd)
   choices = empty_squares(brd).map { |sq| sq[:name] }
 
@@ -393,8 +340,8 @@ def clean_scoreboard!(all_players)
   all_players.each { |player| player[:score] = 0 }
 end
 
-board = { size: 3 }
-num_computers = 1
+board = { size: 6 }
+num_computers = 2
 num_people = 1
 whos_first = 'P'
 best_of = 3
@@ -416,11 +363,6 @@ compile_board!(board)
 # OPTIMIZE: Shove this in a method somewhere else
 board[:tokens] = []
 players.each { |player| board[:tokens] << player[:token] }
-
-# TODO: figure out diags
-display_board(board, textbars)
-all_diags_two(board).each { |thing| p thing }
-yes?
 
 loop do
   clean_board!(board)
