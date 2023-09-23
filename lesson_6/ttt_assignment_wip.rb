@@ -3,6 +3,10 @@
 EMPTY_TOKEN = ' '
 LETTERS = ('A'..'Z').to_a
 
+MAX_BOARD_SIZE = 9
+MAX_PLAYERS = 9
+MIN_PLAYERS = 2
+
 def prompt(msg)
   puts "=> #{msg}"
 end
@@ -51,12 +55,16 @@ end
 def get_valid_input(options)
   answer = gets.chomp.upcase
 
-  until options.include?(answer)
+  until options.include?(answer) || options.include?(answer.to_i)
     prompt("That is not a valid option, try again.")
     answer = gets.chomp.upcase
   end
 
-  answer
+  if options.include?(answer)
+    answer
+  else
+    answer.to_i
+  end
 end
 
 def build_player_list(people, computers)
@@ -67,7 +75,7 @@ def build_player_list(people, computers)
     tokens = %w[X O]
     names = %w[Player Computer]
   else
-    tokens = ['X', 'O', '#', '!', '&', '%', '*']
+    tokens = ['X', 'O', '#', '!', '/', '&', '%', '*', '^']
     people.times do |num|
       names << "Player#{num + 1}"
     end
@@ -340,18 +348,50 @@ def clean_scoreboard!(all_players)
   all_players.each { |player| player[:score] = 0 }
 end
 
-board = { size: 6 }
-num_computers = 2
+board = { size: 3 }
+num_computers = 1
 num_people = 1
 whos_first = 'P'
-best_of = 3
+best_of = 5
 
 display_rules
-# TODO: Change settings?
 prompt("Would you like to open advanced settings? (Y/N)")
 if yes?
-  prompt("How large should each side of the board be? (3-9)")
-  prompt("How many computers do you want to play against? (0-6)")
+  screenwipe
+  puts "Advanced Settings"
+  text_divider
+
+  prompt("How large should each side of the board be? (3-#{MAX_BOARD_SIZE})")
+  board[:size] = get_valid_input((3..MAX_BOARD_SIZE).to_a)
+  text_divider
+
+  prompt("There must be a minimum of #{MIN_PLAYERS} players total.")
+  prompt("How many live people are playing? (0-#{MAX_PLAYERS})")
+  num_people = get_valid_input((0..MAX_PLAYERS).to_a)
+  
+
+  min_computers = MIN_PLAYERS - num_people
+  min_computers = 0 if min_computers < 0
+  max_computers = MAX_PLAYERS - num_people
+  prompt("How many computers are playing? (#{min_computers}-#{max_computers})")
+  num_computers = get_valid_input((min_computers..max_computers).to_a)
+  text_divider
+
+  if num_people >= 1 && num_computers >= 1
+    prompt("Which side goes first? (Player, Computer, Random)")
+    options = %w[P PLAYER C COMPUTER R RANDOM]
+    whos_first = get_valid_input(options).chars.first
+    text_divider
+  end
+
+  prompt("How many match wins to win the game? (1-50)")
+  best_of = get_valid_input((1..50).to_a)
+  text_divider
+
+  prompt("Ready to start? (Y/N)")
+  until yes?
+    prompt("Whenever you're ready :)")
+  end
 end
 
 # OPTIMIZE: Move the build token reminder into the textbars
