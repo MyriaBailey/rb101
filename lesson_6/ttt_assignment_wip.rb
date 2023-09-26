@@ -15,7 +15,7 @@ def joinor(list)
   list = list.dup
 
   if list.size <= 2
-    list.join(" and ")
+    list.join(" or ")
   else
     last = list.pop
     list.join(", ") + ", or " + last
@@ -53,29 +53,27 @@ def yes?
 end
 
 def get_valid_input(options)
-  answer = gets.chomp.upcase
+  choice = nil
 
-  until options.include?(answer) || options.include?(answer.to_i)
-    prompt("That is not a valid option, try again.")
+  while choice.nil?
     answer = gets.chomp.upcase
+    interpretations = [answer, answer.reverse, answer.to_i]
+    choice = (options & interpretations).first
+
+    prompt("That is not a valid option, try again.") if choice.nil?
   end
 
-  if options.include?(answer)
-    answer
-  else
-    answer.to_i
-  end
+  choice
 end
 
 def build_player_list(people, computers)
   players = []
   names = []
+  tokens = ['X', 'O', '#', '!', '/', '&', '%', '*', '^']
 
   if people == 1 && computers == 1
-    tokens = %w[X O]
     names = %w[Player Computer]
   else
-    tokens = ['X', 'O', '#', '!', '/', '&', '%', '*', '^']
     people.times do |num|
       names << "Player#{num + 1}"
     end
@@ -101,10 +99,11 @@ def build_token_reminder(players)
   end.join(', ')
 end
 
-def build_textbars(brd_size)
+def build_textbars(brd_size, all_players)
   textbars = {
     row_div: "---" + "+---" * (brd_size),
-    col_head: "  "
+    col_head: "  ",
+    tokens: build_token_reminder(all_players)
   }
 
   1.upto(brd_size) do |col|
@@ -120,7 +119,7 @@ def build_squares(brd_size)
   brd_size.times do |row_idx|
     brd_size.times do |col_idx|
       square = { row: row_idx, col: col_idx, token: EMPTY_TOKEN }
-      square[:name] = "#{col_idx + 1}#{LETTERS[row_idx]}"
+      square[:name] = "#{LETTERS[row_idx]}#{col_idx + 1}"
       brd << square
     end
   end
@@ -180,7 +179,7 @@ end
 
 def middle_squares(brd)
   midpoint = brd[:size] / 2
-
+  
   mid_idxs = [midpoint]
   mid_idxs << (midpoint - 1) if brd[:size].even?
 
@@ -193,13 +192,16 @@ def empty_squares(brd)
   brd[:squares].select { |sq| sq[:token] == EMPTY_TOKEN }
 end
 
-def compile_board!(brd)
+def compile_board!(brd, all_players)
   brd[:squares] = build_squares(brd[:size])
+
   brd[:rows] = all_rows(brd)
   brd[:cols] = all_cols(brd)
   brd[:diags] = all_diags(brd)
   brd[:middle] = middle_squares(brd)
   brd[:lines] = brd[:rows] + brd[:cols] + brd[:diags]
+
+  brd[:tokens] = all_players.map { |player| player[:token] }
 end
 
 def clean_board!(brd)
@@ -340,8 +342,19 @@ def someone_won?(brd, player)
   end
 end
 
-def board_tied?(brd)
+def board_full?(brd)
   empty_squares(brd).empty?
+end
+
+def no_winning?(brd)
+  line_strings = lines_to_strings(brd[:lines])
+
+  brd[:tokens].none? do |token|
+    winning_combo = token * 3
+    line_strings.any? do |str|
+      str.tr(EMPTY_TOKEN, token).include?(winning_combo)
+    end
+  end
 end
 
 def clean_scoreboard!(all_players)
@@ -355,12 +368,13 @@ whos_first = 'P'
 best_of = 5
 
 display_rules
-prompt("Would you like to open advanced settings? (Y/N)")
-if yes?
+prompt("Start game with default rules? (Y/N)")
+if !yes?
   screenwipe
   puts "Advanced Settings"
   text_divider
 
+  prompt("Winning will still require 3 tokens in a row.")
   prompt("How large should each side of the board be? (3-#{MAX_BOARD_SIZE})")
   board[:size] = get_valid_input((3..MAX_BOARD_SIZE).to_a)
   text_divider
@@ -394,15 +408,9 @@ if yes?
   end
 end
 
-# OPTIMIZE: Move the build token reminder into the textbars
 players = build_player_list(num_people, num_computers)
-textbars = build_textbars(board[:size])
-textbars[:tokens] = build_token_reminder(players)
-compile_board!(board)
-
-# OPTIMIZE: Shove this in a method somewhere else
-board[:tokens] = []
-players.each { |player| board[:tokens] << player[:token] }
+textbars = build_textbars(board[:size], players)
+compile_board!(board, players)
 
 loop do
   clean_board!(board)
@@ -417,8 +425,11 @@ loop do
       prompt("#{current_player[:name]} won!")
       current_player[:score] += 1
       break
-    elsif board_tied?(board)
-      prompt("It's a tie!")
+    elsif board_full?(board)
+      prompt("It's a tie - Board's full!")
+      break
+    elsif no_winning?(board)
+      prompt("It's a tie - Nobody can win!")
       break
     end
 
