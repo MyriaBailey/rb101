@@ -44,11 +44,11 @@ end
 def yes?
   answer = gets.upcase[0]
 
-  until answer == 'Y' || answer == 'N' do
+  until answer == 'Y' || answer == 'N'
     prompt("Please enter Yes or No")
     answer = gets.upcase[0]
   end
-  
+
   answer.start_with?('Y')
 end
 
@@ -67,30 +67,17 @@ def get_valid_input(options)
 end
 
 def build_player_list(people, computers)
-  players = []
   names = []
   tokens = ['X', 'O', '#', '!', '/', '&', '%', '*', '^']
 
   if people == 1 && computers == 1
-    names = %w[Player Computer]
+    names = %w(Player Computer)
   else
-    people.times do |num|
-      names << "Player#{num + 1}"
-    end
-    computers.times do |num|
-      names << "Computer#{num + 1}"
-    end
+    people.times { |num| names << "Player#{num + 1}" }
+    computers.times { |num| names << "Computer#{num + 1}" }
   end
 
-  names.each do |name|
-    players << {
-      name: name,
-      token: tokens.shift,
-      score: 0
-    }
-  end
-
-  players
+  names.map { |name| { name: name, token: tokens.shift, score: 0 } }
 end
 
 def build_token_reminder(players)
@@ -144,27 +131,14 @@ def all_cols(brd)
 end
 
 def all_diag_coords(brd)
-  coord_sets = []
+  range = (0..(brd[:size] - 1)).to_a
+  xy_pairs = [range, range.reverse].repeated_permutation(2).to_a
 
-  cols_forward = (0..(brd[:size] - 1)).to_a
-  cols_reversed = cols_forward.reverse
-  rows_forward = cols_forward.dup
-  rows_reversed = cols_forward.reverse
-
-  until cols_forward.empty?
-    coord_sets << [cols_forward, rows_forward].transpose
-    coord_sets << [cols_forward, rows_reversed].transpose
-
-    coord_sets << [cols_reversed, rows_forward].transpose
-    coord_sets << [cols_reversed, rows_reversed].transpose
-
-    cols_forward.shift
-    cols_reversed.shift
-    rows_forward.pop
-    rows_reversed.pop
-  end
-
-  coord_sets.reject! { |line| line.count < 3 }
+  range.take(brd[:size] - 2).map do |i|
+    xy_pairs.map do |pair|
+      [pair[0].drop(i), pair[1].take(brd[:size] - i)].transpose
+    end
+  end.flatten(1).map(&:sort).uniq
 end
 
 def all_diags(brd)
@@ -179,7 +153,7 @@ end
 
 def middle_squares(brd)
   midpoint = brd[:size] / 2
-  
+
   mid_idxs = [midpoint]
   mid_idxs << (midpoint - 1) if brd[:size].even?
 
@@ -269,12 +243,13 @@ def pick_computer_piece(player, brd)
   strings = lines_to_strings(brd[:lines])
   combos = combo_strings(player, brd)
 
-  sq = find_strategic_sq(lines, strings, combos[:win])
-  sq = find_strategic_sq(lines, strings, combos[:defend]) if sq.nil?
-  sq = find_strategic_sq(lines, strings, combos[:advance]) if sq.nil?
-  sq = find_mid_sq(brd) if sq.nil?
-  sq = empty_squares(brd).sample if sq.nil?
-  sq
+  [
+    find_strategic_sq(lines, strings, combos[:win]),
+    find_strategic_sq(lines, strings, combos[:defend]),
+    find_strategic_sq(lines, strings, combos[:advance]),
+    find_mid_sq(brd),
+    empty_squares(brd).sample
+  ].compact.first
 end
 
 def one_token_strings(token)
@@ -368,7 +343,7 @@ whos_first = 'P'
 best_of = 5
 
 display_rules
-prompt("Start game with default rules? (Y/N)")
+prompt("Use default rules? (Y/N)")
 if !yes?
   screenwipe
   puts "Advanced Settings"
@@ -382,7 +357,6 @@ if !yes?
   prompt("There must be a minimum of #{MIN_PLAYERS} players total.")
   prompt("How many live people are playing? (0-#{MAX_PLAYERS})")
   num_people = get_valid_input((0..MAX_PLAYERS).to_a)
-  
 
   min_computers = MIN_PLAYERS - num_people
   min_computers = 0 if min_computers < 0
@@ -393,7 +367,7 @@ if !yes?
 
   if num_people >= 1 && num_computers >= 1
     prompt("Which side goes first? (Player, Computer, Random)")
-    options = %w[P PLAYER C COMPUTER R RANDOM]
+    options = %w(P PLAYER C COMPUTER R RANDOM)
     whos_first = get_valid_input(options).chars.first
     text_divider
   end
@@ -420,7 +394,7 @@ loop do
   loop do
     place_piece!(current_player, board)
     display_board(board, textbars)
-    
+
     if someone_won?(board, current_player)
       prompt("#{current_player[:name]} won!")
       current_player[:score] += 1
@@ -435,7 +409,7 @@ loop do
 
     current_player = alternate_player(current_player, players)
   end
-  
+
   text_divider
   puts "Scoreboard"
   players.each { |player| prompt("#{player[:name]}: #{player[:score]}") }
@@ -446,7 +420,7 @@ loop do
     win_text = "#{winner[:name]} won #{best_of} games!"
     win_text << " Congratulations!" if winner[:name].start_with?('P')
     prompt(win_text)
-    
+
     prompt("Do you want to start over and keep playing? (Y/N)")
     yes? ? clean_scoreboard!(players) : break
   else
