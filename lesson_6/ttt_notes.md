@@ -1,5 +1,7 @@
 # Tic-Tac-Toe Assignment
 
+Note: this document only reflects the initial concepts and algorithms going into the assignment, and was not kept up-to-date once the project was started.
+
 # Rules
 
 Input: who goes first, what piece to mark, play again

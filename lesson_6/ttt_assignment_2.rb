@@ -101,13 +101,13 @@ end
 
 def build_textbars(brd_size, all_players)
   textbars = {
-    row_div: "---" + "+---" * (brd_size),
-    col_head: "  ",
+    row_div: "---+" * (brd_size + 1),
+    col_head: "   |",
     tokens: build_token_reminder(all_players)
   }
 
   1.upto(brd_size) do |col|
-    textbars[:col_head] << " | #{col}"
+    textbars[:col_head] << " #{col} |"
   end
 
   textbars
@@ -216,8 +216,8 @@ def display_board(brd, textbars)
 
   brd[:rows].each.with_index do |row, idx|
     puts textbars[:row_div]
-    row_text = " #{LETTERS[idx]}"
-    row.each { |sq| row_text << " | #{sq[:token]}" }
+    row_text = " #{LETTERS[idx]} |"
+    row.each { |sq| row_text << " #{sq[:token]} |" }
     puts row_text
   end
   text_divider
@@ -443,7 +443,10 @@ loop do
   text_divider
   winner = players.select { |player| player[:score] >= best_of }.first
   if winner
-    prompt("#{winner[:name]} won #{best_of} games!")
+    win_text = "#{winner[:name]} won #{best_of} games!"
+    win_text << " Congratulations!" if winner[:name].start_with?('P')
+    prompt(win_text)
+    
     prompt("Do you want to start over and keep playing? (Y/N)")
     yes? ? clean_scoreboard!(players) : break
   else

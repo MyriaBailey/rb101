@@ -3,6 +3,9 @@
 # OR PROPER COMPUTER CHIP PLACEMENT YET.
 # It does have an expandable board and player count, however.
 
+# Scrapped in favor of ttt_assignment_2 to start from scratch.
+# Only kept here for record's sake.
+
 require "pry"
 require "pry-byebug"
 
